@@ -1,16 +1,46 @@
+
+# Django Rest Framework
 from rest_framework import generics
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
+from rest_framework import mixins, viewsets
 
-from adventure import models, notifiers, repositories, serializers, usecases
+# Models and Serializers
+from adventure import models, notifiers, repositories, usecases
+from adventure.models import validate_number_plate, Vehicle, ServiceArea
+
+# Serializers
+from adventure.serializers import (
+    VehicleModelSerializer,
+    ServiceAreaModelSerializer,
+    JourneySerializer)
+
+
+class GetVehicleAPIView(generics.ListCreateAPIView):
+    """ Get vehicles  """
+
+    serializer_class = VehicleModelSerializer
+
+    def get_queryset(self):
+        """ Return all vehicles or a vehicle by license plate """
+
+        plate = self.kwargs.get("plate", None)
+        if plate:
+            if validate_number_plate(plate):
+                return Vehicle.objects.filter(number_plate=plate)
+            else:
+                raise ValidationError("Invalid license plate")
+
+        return Vehicle.objects.all()
 
 
 class CreateVehicleAPIView(APIView):
     def post(self, request: Request) -> Response:
         payload = request.data
-        vehicle_type = models.VehicleType.objects.get(name=payload["vehicle_type"])
+        vehicle_type = models.VehicleType.objects.get(
+            name=payload["vehicle_type"])
         vehicle = models.Vehicle.objects.create(
             name=payload["name"],
             passengers=payload["passengers"],
@@ -26,11 +56,29 @@ class CreateVehicleAPIView(APIView):
             status=201,
         )
 
+
+class GetServiceAreaAPIView(generics.ListCreateAPIView):
+    """ Get service area """
+
+    serializer_class = ServiceAreaModelSerializer
+
+    def get_queryset(self):
+        """ Returns all service areas or one service area per kilometer """
+
+        kilometer = self.kwargs.get("kilometer", None)
+        if kilometer:
+            return ServiceArea.objects.filter(kilometer=kilometer)
+
+        return ServiceArea.objects.all()
+
+
 class CreateServiceAreaAPIView(APIView):
     def post(self, request: Request) -> Response:
         payload = request.data
-        left_station = models.ServiceArea.objects.get(pk=payload["left_station"]) if "left_station" in payload else None
-        right_station = models.ServiceArea.objects.get(pk=payload["right_station"]) if "right_station" in payload else None
+        left_station = models.ServiceArea.objects.get(
+            pk=payload["left_station"]) if "left_station" in payload else None
+        right_station = models.ServiceArea.objects.get(
+            pk=payload["right_station"]) if "right_station" in payload else None
         service_area = models.ServiceArea.objects.create(
             kilometer=payload["kilometer"],
             gas_price=payload["gas_price"],
@@ -49,8 +97,9 @@ class CreateServiceAreaAPIView(APIView):
             status=201
         )
 
+
 class StartJourneyAPIView(generics.CreateAPIView):
-    serializer_class = serializers.JourneySerializer
+    serializer_class = JourneySerializer
 
     def perform_create(self, serializer) -> None:
         repo = self.get_repository()

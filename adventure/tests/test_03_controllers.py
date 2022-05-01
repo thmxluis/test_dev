@@ -2,7 +2,6 @@ import pytest
 from django.core import mail
 
 from adventure import models, notifiers, repositories, usecases, views
-
 from .test_02_usecases import MockJourneyRepository
 
 #########
@@ -44,6 +43,7 @@ class TestCreateVehicleAPIView:
         response = client.post("/api/adventure/create-vehicle/", payload)
         assert response.status_code == 201
 
+
 class TestCreateServiceAreaAPIView:
     def test_create(self, client, mocker):
         mocker.patch.object(
@@ -54,27 +54,68 @@ class TestCreateServiceAreaAPIView:
             ),
         )
 
-        payload = {"kilometer":60, "gas_price":784}
-        response = client.post("/api/adventure/create-service-area/", payload)  
+        payload = {"kilometer": 60, "gas_price": 784}
+        response = client.post("/api/adventure/create-service-area/", payload)
         assert response.status_code == 201
 
-@pytest.mark.skip  # Remove
+
+@pytest.mark.django_db
 class TestGetVehicleAPIView:
     def test_get(self, client, mocker):
-        # TODO: Implement endpoint to get full list of vehicles
-        pass
-    def test_get_by_license_plate(self, client, mocker):
-        # TODO: Implement endpoint to get vehicle data by license plate
-        pass
+        """ Test Get full list of vehicles """
 
-@pytest.mark.skip  # Remove
+        mocker.patch.object(
+            models.Vehicle.objects,
+            "get",
+            return_value=models.Vehicle(
+                id=1, name="Kitt", passengers=6, vehicle_type=models.VehicleType(name="car")),
+        )
+        response = client.get("/api/adventure/vehicles/")
+        assert response.status_code == 200
+
+    def test_get_by_license_plate(self, client, mocker):
+        """ Test Get vehicle by license plate """
+
+        number_plate = "AA-12-34"
+        mocker.patch.object(
+            models.Vehicle.objects,
+            "get",
+            return_value=models.Vehicle(
+                id=1, name="Kitt", passengers=6, number_plate=number_plate, vehicle_type=models.VehicleType(name="car")),
+        )
+        response = client.get(f"/api/adventure/vehicles/{number_plate}/")
+        assert response.status_code == 200
+
+
+@pytest.mark.django_db
 class TestGetServiceAreaAPIView:
     def test_get(self, client, mocker):
-        # TODO: Implement endpoint to get full list of service areas
-        pass
+        """ Test Get full list of service areas """
+
+        mocker.patch.object(
+            models.ServiceArea.objects,
+            "get",
+            return_value=models.ServiceArea(
+                id=1, kilometer=60, gas_price=784
+            ),
+        )
+        response = client.get("/api/adventure/service-areas/")
+        assert response.status_code == 200
+
     def test_get_by_kilometer(self, client, mocker):
-        # TODO: Implement endpoint to get service area by kilometer
-        pass
+        """ Test Get service area by kilometer """
+
+        kilometer = 60
+        mocker.patch.object(
+            models.ServiceArea.objects,
+            "get",
+            return_value=models.ServiceArea(
+                id=1, kilometer=kilometer, gas_price=784
+            ),
+        )
+        response = client.get(f"/api/adventure/service-areas/{kilometer}/")
+        assert response.status_code == 200
+
 
 class TestStartJourneyAPIView:
     def test_api(self, client, mocker):

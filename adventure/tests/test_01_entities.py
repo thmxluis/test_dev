@@ -23,17 +23,20 @@ def tesla(car):
         name="Tesla", passengers=3, vehicle_type=car, number_plate="AA-12-34"
     )
 
+
 @pytest.fixture
 def service_area_center():
     return models.ServiceArea(
         kilometer=60, gas_price=894
     )
 
+
 @pytest.fixture
 def service_area_left():
     return models.ServiceArea(
         kilometer=40, gas_price=894
     )
+
 
 @pytest.fixture
 def service_area_right():
@@ -60,17 +63,15 @@ class TestVehicle:
         distribution_expected = [[True, True], [True, True], [True, False]]
         assert vehicle.get_distribution() == distribution_expected
 
-    @pytest.mark.skip  # Remove
     def test_valid_number_plate(self):
-        # TODO: implement a function called "validate_number_plate"
-        # a valid number plate consists of three pairs of alphanumeric chars separated by hyphen
-        # the first pair must be letters and the rest must be numbers
-        # e.g: AA-12-34
+        """ Test Valid Number Plate """
+
         assert models.validate_number_plate("AA-12-34")
         assert not models.validate_number_plate("AA-BB-34")
         assert not models.validate_number_plate("12-34-56")
         assert not models.validate_number_plate("AA1234")
         assert not models.validate_number_plate("AA 12 34")
+
 
 class TestServiceArea:
     def test_wrong_left_placement(self, service_area_center, service_area_right):
@@ -90,7 +91,8 @@ class TestServiceArea:
 
 class TestJourney:
     def test_is_finished(self, tesla):
-        journey = models.Journey(start=date.today(), end=date.today(), vehicle=tesla)
+        journey = models.Journey(
+            start=date.today(), end=date.today(), vehicle=tesla)
         assert journey.is_finished()
 
     def test_is_not_finished(self, tesla):

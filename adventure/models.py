@@ -89,3 +89,11 @@ class ServiceArea(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+def validate_number_plate(number_plate):
+    """ Validates a number plate. Format -> AA-12-34"""
+
+    if not re.match(r'^[A-Z]{2}-[0-9]{2}-[0-9]{2}$', number_plate):
+        return False
+    return True
